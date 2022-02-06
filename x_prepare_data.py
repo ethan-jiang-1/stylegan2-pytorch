@@ -1,3 +1,4 @@
+import sys
 import argparse
 from PIL import Image
 import lmdb
@@ -42,7 +43,42 @@ def xprepare():
     with lmdb.open(args.out, map_size=1024 ** 4, readahead=False) as env:
         prepare(env, imgset, args.n_worker, sizes=sizes, resample=resample)
 
+        print(env.stat())
+
+    env_chk = lmdb.open(
+        args.out,
+        max_readers=32,
+        readonly=True,
+        lock=False,
+        readahead=False,
+        meminit=False,
+    )
+
+    with env_chk.begin(write=False) as txn:
+        length = int(txn.get('length'.encode('utf-8')).decode('utf-8'))
+        print(length)
+
+        count = 0
+        for index in range(length):
+            key = f'256-{str(index).zfill(5)}'.encode('utf-8')
+            img_bytes = txn.get(key)
+            if img_bytes is not None:
+                count += 1
+
+        print("count in lmdb", count)
+
+
+def fake_cmdline():
+    cmd = "x_prepare_data.py "
+    cmd += "--out {} ".format("dataset_planets")
+    cmd += "--size {} ".format(256)
+    cmd += "{} ".format("datasrc")
+    cmd = cmd.strip()
+    print(cmd)
+    sys.argv = cmd.split(" ")
+    return
 
 
 if __name__ == "__main__":
+    fake_cmdline()
     xprepare()
