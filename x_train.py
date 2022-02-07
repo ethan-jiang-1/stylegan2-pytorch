@@ -223,15 +223,29 @@ def xtrain():
     )
 
     if get_rank() == 0 and wandb is not None and args.wandb:
-        wandb.init(project="stylegan 2")
+        if args.arch == 'swagan':
+            wandb.init(project="swagan-planets")
+        else:
+            wandb.init(project="stylegan2-planets")
 
     train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, device)
 
 
 
 def fake_cmdline():
+    #os.environ["CUDA_HOME"] = "/usr/local/cuda-11"
+
     cmd = "x_train.py "
-    cmd += "--path {} ".format("dataset_planets")
+    cmd += "--batch {} ".format(16)
+    cmd += "--wandb "
+
+    cmd += "--iter {} ".format(800000)
+    cmd += ""
+
+    #cmd += "--ckpt {} ".format(resume_ckpt)
+    #cmd += "--arch {} ".format("swagan")
+
+    cmd += "{} ".format("dataset_planets")
 
     cmd = cmd.strip()
     print(cmd)
