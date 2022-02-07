@@ -1,32 +1,32 @@
 import argparse
 import os
-
 import sys
-
-import torch
-from torch import nn, optim
-from torch.utils import data
-from torchvision import transforms
-
-try:
-    import wandb
-
-except ImportError:
-    wandb = None
-
-
-from dataset import MultiResolutionDataset
-from distributed import (
-    get_rank,
-    synchronize,
-    reduce_loss_dict,
-    reduce_sum,
-    get_world_size,
-)
-from train import accumulate, data_sampler, train
 
 
 def xtrain():
+    import torch
+    from torch import nn, optim
+    from torch.utils import data
+    from torchvision import transforms
+
+    try:
+        import wandb
+
+    except ImportError:
+        wandb = None
+
+
+    from dataset import MultiResolutionDataset
+    from distributed import (
+        get_rank,
+        synchronize,
+        reduce_loss_dict,
+        reduce_sum,
+        get_world_size,
+    )
+    from train import accumulate, data_sampler, train
+
+
     device = "cuda"
 
     parser = argparse.ArgumentParser(description="StyleGAN2 trainer")
@@ -188,8 +188,10 @@ def xtrain():
         discriminator.load_state_dict(ckpt["d"])
         g_ema.load_state_dict(ckpt["g_ema"])
 
-        g_optim.load_state_dict(ckpt["g_optim"])
-        d_optim.load_state_dict(ckpt["d_optim"])
+        if "g_optim" in ckpt:
+            g_optim.load_state_dict(ckpt["g_optim"])
+        if "d_optim" in ckpt:
+            d_optim.load_state_dict(ckpt["d_optim"])
 
     if args.distributed:
         generator = nn.parallel.DistributedDataParallel(
@@ -233,26 +235,46 @@ def xtrain():
 
 
 def fake_cmdline():
+    org_argv = sys.argv
+    print(org_argv)
     #os.environ["CUDA_HOME"] = "/usr/local/cuda-11"
 
     cmd = "x_train.py "
     cmd += "--batch {} ".format(16)
     cmd += "--wandb "
 
-    cmd += "--iter {} ".format(800000)
+    #cmd += "--iter {} ".format(800000)
+    #cmd += "--iter {} ".format(400000)
+    cmd += "--iter {} ".format(24000)
     cmd += ""
 
-    #cmd += "--ckpt {} ".format(resume_ckpt)
+    cmd += "--ckpt {} ".format("network-snapshot-000182.pt")
     #cmd += "--arch {} ".format("swagan")
 
     cmd += "{} ".format("dataset_planets")
 
     cmd = cmd.strip()
-    print(cmd)
     sys.argv = cmd.split(" ")
+
+    for og in org_argv:
+        if og.startswith("--local_rank"):
+            sys.argv.append(og)
+
+    print(sys.argv)
+
     return
+
+
+def fake_env():
+    #os.makedirs("/root/autodl-tmp/checkpoint_swagan", exist_ok=True)
+    #os.makedirs("/root/autodl-tmp/sample_swagan", exist_ok=True)
+
+    if os.path.isdir("/root/autodl-tmp"):
+        os.makedirs("/root/autodl-tmp/checkpoint_stylegan2", exist_ok= True)
+        os.makedirs("/root/autodl-tmp/sample_stylegan2", exist_ok= True)
 
 
 if __name__ == "__main__":
     fake_cmdline()
+    fake_env()
     xtrain()

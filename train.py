@@ -304,17 +304,25 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
 
             if i % 100 == 0:
                 with torch.no_grad():
+                    if os.path.isdir(f"/root/autodl-tmp/sample_{args.arch}"):
+                        sp_name = f"/root/autodl-tmp/sample_{args.arch}/{str(i).zfill(6)}.png"
+                    else:
+                        sp_name = f"sample_{args.arch}/{str(i).zfill(6)}.png"
                     g_ema.eval()
                     sample, _ = g_ema([sample_z])
                     utils.save_image(
                         sample,
-                        f"sample_{args.arch}/{str(i).zfill(6)}.png",
+                        sp_name,
                         nrow=int(args.n_sample ** 0.5),
                         normalize=True,
                         range=(-1, 1),
                     )
 
             if i % 10000 == 0:
+                if os.path.isdir(f"/root/autodl-tmp/checkpoint_{args.arch}"):
+                    pt_name = f"/root/autodl-tmp/checkpoint_{args.arch}/{str(i).zfill(6)}.pt"
+                else:
+                    pt_name = f"checkpoint_{args.arch}/{str(i).zfill(6)}.pt"
                 torch.save(
                     {
                         "g": g_module.state_dict(),
@@ -325,7 +333,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                         "args": args,
                         "ada_aug_p": ada_aug_p,
                     },
-                    f"checkpoint_{args.arch}/{str(i).zfill(6)}.pt",
+                    pt_name,
                 )
 
 
