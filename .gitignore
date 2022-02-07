@@ -134,6 +134,9 @@ wandb/
 
 datasrc
 dataset_*
+data_chk
 
 *.png 
+
+inception_ffhq.pkl
 
