@@ -134,3 +134,6 @@ wandb/
 
 datasrc
 dataset_*
+
+*.png 
+
