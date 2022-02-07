@@ -230,6 +230,7 @@ if __name__ == "__main__":
 
     import dnnlib
     from dnnlib import tflib
+    from dnnlib.util import EasyDict
     tflib.init_tf()
 
     with open(args.path, "rb") as f:
@@ -286,7 +287,8 @@ if __name__ == "__main__":
             randomize_noise=False,
         )
 
-    Gs_kwargs = dnnlib.EasyDict()
+    #Gs_kwargs = dnnlib.EasyDict()
+    Gs_kwargs = EasyDict()
     Gs_kwargs.randomize_noise = False
     img_tf = g_ema.run(z, None, **Gs_kwargs)
     img_tf = torch.from_numpy(img_tf).to(device)
